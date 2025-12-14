@@ -21,7 +21,7 @@ address structure
 }
 """
 
-class client:
+class Client:
 
     def __init__(self, csv_file):
         self.session = requests.Session()
@@ -130,7 +130,7 @@ class client:
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     addresses_list = []
-    scraper = client('./Book1.csv')
+    scraper = Client('./Book1.csv')
     all_addresses = scraper.build_all_addresses()
     coo=scraper.initiate_cookies()
     if coo:
