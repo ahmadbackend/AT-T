@@ -82,31 +82,51 @@ class client:
         url = f"https://www.att.com/msapi/idp-content-orchestration/v1/scms/sales/wbb/fiber?addressId={valid_address}&consumerType=CON"
         response= self.session.get(url)
         print(response.status_code)
-        #print(response.content[:500])  # look at first bytes
-        content = response.content
-
-
         print("Content-Type:", response.headers.get("Content-Type"))
         print("Content-Encoding:", response.headers.get("Content-Encoding"))
 
-
-        if response.headers.get("Content-Encoding") == "br":
-            content = brotli.decompress(content)  # decompress Brotli
-            cms_feed = content.get("cms-feed", {})
-            components = cms_feed.get("components", {})
-            print(components)
-        try:
-            data = json.loads(content.decode("utf-8"))
-
-
-        except Exception as e:
-            #print("JSON decode failed:", e)
-            #print(content["cms-feed"]["components"])
+        if response.status_code != 200:
+            print("Request failed with status:", response.status_code)
             return None
-        #print(data)
-        return data
 
+        try:
+            data = response.json()
+            cms_feed = data.get("cms-feed", {})
+            components = cms_feed.get("components", {})
+            target = "Great news! AT&T Fiber® is available at"
+            found, path = self.recursive_search(components, target)
+            if found:
+                print(f"Phrase found at path: {path}")
+            else:
+                print("Phrase not found")
+            return data
+        except json.JSONDecodeError as e:
+            print("JSON decode failed:", e)
+            return None
 
+    def recursive_search(self, obj, target_phrase, current_path=None):
+        """
+        Recursively search for the target_phrase in 'text' values within a nested dict/list.
+        Returns (True, path) if found, else (False, None).
+        """
+        if current_path is None:
+            current_path = []
+
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                new_path = current_path + [key]
+                if key == 'text' and isinstance(value, str) and target_phrase in value:
+                    return True, ' -> '.join(new_path)
+                found, path = self.recursive_search(value, target_phrase, new_path)
+                if found:
+                    return True, path
+        elif isinstance(obj, list):
+            for idx, item in enumerate(obj):
+                new_path = current_path + [f'[{idx}]']
+                found, path = self.recursive_search(item, target_phrase, new_path)
+                if found:
+                    return True, path
+        return False, None
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     addresses_list = []
