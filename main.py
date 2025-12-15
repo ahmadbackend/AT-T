@@ -4,10 +4,6 @@ import brotli
 
 from bs4 import BeautifulSoup as bs
 import json
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 """
 address structure 
 {
@@ -63,14 +59,11 @@ class Client:
             "Accept-Encoding":"gzip, deflate, br, zstd"
         })
         resp = self.session.post(url, json = addres)
-        # print(resp.status_code)
-        # print(resp.text[:500])  # print first 500 chars
         resp.raise_for_status()  # will raise if HTTP error
         data = resp.json()  # parse JSON
 
         valid_address = data.get("content", {}).get("validAddress", {})
         address_id = valid_address.get("id")
-        #print(address_id)
         return address_id
 
     def get_fiber_value(self, valid_address):
@@ -96,6 +89,7 @@ class Client:
             target = "Great news! AT&T Fiber® is available at"
             found, path = self.recursive_search(components, target)
             if found:
+                return True
                 print(f"Phrase found at path: {path}")
             else:
                 print("Phrase not found")
@@ -129,15 +123,13 @@ class Client:
         return False, None
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    addresses_list = []
     scraper = Client('./Book1.csv')
     all_addresses = scraper.build_all_addresses()
     coo=scraper.initiate_cookies()
     if coo:
         for addres in all_addresses:
             resp = scraper.get_address_encoded(addres)
-            scraper.get_fiber_value(resp)
-            #print(resp)
-
+            if scraper.get_fiber_value(resp):
+                print("this address support fiber internet"
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
